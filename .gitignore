@@ -1,0 +1,11 @@
+# Resultados locais e copias de seguranca
+/output/
+*.blend[0-9]*
+*.skp~
+*.skb
+
+# Python e sistema operativo
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db
