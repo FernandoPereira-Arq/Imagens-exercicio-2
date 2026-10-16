@@ -1,0 +1,31 @@
+newmtl render_white
+Kd 0.88 0.86 0.80
+Ka 0.1 0.1 0.1
+
+newmtl sandstone
+Kd 0.66 0.52 0.34
+Ka 0.1 0.1 0.1
+
+newmtl wood
+Kd 0.42 0.22 0.10
+Ka 0.1 0.1 0.1
+
+newmtl roof_tile
+Kd 0.58 0.20 0.10
+Ka 0.1 0.1 0.1
+
+newmtl glass
+Kd 0.08 0.12 0.14
+d 0.45
+Tr 0.55
+
+newmtl copper
+Kd 0.55 0.22 0.09
+Ka 0.1 0.1 0.1
+
+newmtl pool
+Kd 0.10 0.55 0.72
+d 0.75
+
+newmtl grass
+Kd 0.18 0.38 0.12
