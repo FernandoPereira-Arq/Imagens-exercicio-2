@@ -5,7 +5,7 @@
   const media = window.IAAA_MEDIA || {};
   const $ = id => document.getElementById(id);
   let current = data[0], filter = 'Todos', mode = 'split', toastTimer, dragging = false;
-  const missing = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#e8e6dd"/><text x="400" y="290" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#58665f">Imagem no ficheiro media.js</text></svg>');
+  const missing = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#e8e6dd"/><text x="400" y="290" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#58665f">Imagem não carregada: verificar ficheiros</text></svg>');
   const imageURL = key => media[key] || missing;
   const text = (id, value) => { $(id).textContent = value; };
   function notice(message) {
@@ -13,6 +13,11 @@
     clearTimeout(toastTimer); toastTimer = setTimeout(() => $('status').classList.remove('visible'), 3300);
   }
   function image(element, key, alt) {
+    element.onerror = () => {
+      element.onerror = null; element.src = missing;
+      element.alt = 'Imagem em falta: ' + imageURL(key);
+      if (key.startsWith('ana-')) notice('Faltam imagens da colega: copiar os seis PNG para docs/imagens.');
+    };
     element.src = imageURL(key); element.alt = alt;
   }
   function visibleCases() { return data.filter(c => filter === 'Todos' || c.group === filter); }
@@ -61,24 +66,32 @@
     image($('after-image'), c.after, c.afterLabel + ' — ' + c.title);
     image($('overlay-before'), c.before, c.beforeLabel); image($('overlay-after'), c.after, c.afterLabel);
     ['intent', 'observed', 'caution'].forEach(key => text(key, c[key]));
+    const sourceArea = $('source-text').parentElement;
+    sourceArea.querySelector('.source-link')?.remove();
+    if (c.sourceUrl && /^https?:\/\//.test(c.sourceUrl)) {
+      const link = document.createElement('a'); link.className = 'source-link';
+      link.href = c.sourceUrl; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      link.textContent = 'Consultar a página de origem ↗'; $('source-text').after(link);
+    }
     text('prompt-text', c.prompt); text('prompt-date', c.date); text('source-text', c.source); text('output-file', c.output);
     $('specs').replaceChildren();
     c.specs.forEach(([key, value]) => {
       const row = document.createElement('div'), dt = document.createElement('dt'), dd = document.createElement('dd');
       dt.textContent = key; dd.textContent = value; row.append(dt, dd); $('specs').append(row);
     });
+    text('refs-note', c.refsNote || 'PDF anexado na etapa 08; noutras etapas, estes excertos servem de confronto posterior. CSF Arquitectos Associados · Setembro de 2003.');
     $('refs-block').hidden = !c.refs.length; $('reference-grid').replaceChildren();
     c.refs.forEach(([key, label]) => {
       const b = document.createElement('button'), img = document.createElement('img'), caption = document.createElement('span');
-      b.setAttribute('aria-label', `Ampliar ${label}`); image(img, key, label + ' — documento de referência da Aroeira');
-      caption.textContent = label + ' ↗'; b.append(img, caption); b.addEventListener('click', () => zoom(key, label + ' · CSF Arquitectos Associados · Setembro de 2003'));
+      b.setAttribute('aria-label', `Ampliar ${label}`); image(img, key, label + ' — ' + (c.referenceCredit || 'CSF Arquitectos Associados · Setembro de 2003'));
+      caption.textContent = label + ' ↗'; b.append(img, caption); b.addEventListener('click', () => zoom(key, label + ' · ' + (c.referenceCredit || 'CSF Arquitectos Associados · Setembro de 2003')));
       $('reference-grid').append(b);
     });
     document.querySelectorAll('.case-card').forEach(b => {
       const active = b.dataset.case === c.id; b.classList.toggle('active', active); b.setAttribute('aria-pressed', String(active));
     });
     const list = visibleCases(), position = list.indexOf(c);
-    text('case-count', `${c.number} / 09`); $('previous').disabled = position <= 0; $('next').disabled = position >= list.length - 1;
+    text('case-count', `${c.number} / ${String(data.length).padStart(2, '0')}`); $('previous').disabled = position <= 0; $('next').disabled = position >= list.length - 1;
     setRange(50);
     if (updateHash) { try { history.replaceState(null, '', '#' + c.id); } catch (_) {} }
     $('case-detail').classList.remove('refresh'); void $('case-detail').offsetWidth; $('case-detail').classList.add('refresh');
@@ -86,6 +99,18 @@
   document.querySelectorAll('[data-media]').forEach(img => image(img, img.dataset.media, img.alt));
   $('media-warning').hidden = !!Object.keys(media).length;
   if (!data.length) { notice('Não foi possível carregar content.js.'); return; }
+  const groups = [...new Set(data.map(c => c.group))];
+  $('filters').replaceChildren();
+  ['Todos', ...groups].forEach(name => {
+    const button = document.createElement('button'), count = document.createElement('span');
+    button.dataset.filter = name; button.append(document.createTextNode(name + ' '));
+    count.textContent = name === 'Todos' ? data.length : data.filter(c => c.group === name).length;
+    button.append(count); $('filters').append(button);
+  });
+  syncFilter();
+  text('case-total', String(groups.length).padStart(2, '0'));
+  text('stage-total', String(data.length).padStart(2, '0'));
+  text('archive-summary', `${groups.length} casos de estudo. ${data.length} etapas documentadas.`);
   document.querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', () => {
     filter = b.dataset.filter; syncFilter(); rail();
     select(visibleCases().some(c => c.id === current.id) ? current.id : visibleCases()[0].id);
@@ -115,7 +140,7 @@
     }
   });
   $('download-prompts').addEventListener('click', () => {
-    const body = 'IAAA — EXERCÍCIO 02\nDO TRAÇO À IMAGEM\n\nPrompts transcritos da conversa, sem correção da ortografia.\n\n' + data.map(c => `${c.number} — ${c.title}\n${c.date} | ${c.subtitle}\n\nFONTE\n${c.source}\n\nPROMPT ORIGINAL\n${c.prompt}\n\nOUTPUT\n${c.output}\n\nLEITURA DO PEDIDO\n${c.intent}\n\nO QUE SE OBSERVA\n${c.observed}\n\nA VALIDAR\n${c.caution}`).join('\n\n' + '—'.repeat(55) + '\n\n');
+    const body = 'IAAA — EXERCÍCIO 02\nDO TRAÇO À IMAGEM\nGRUPO 9\nAna Nascimento Silva · Fernando Pereira · Francisca Rebelo\n\nPrompts transcritos das fontes indicadas, sem correção da ortografia.\n\n' + data.map(c => `${c.number} — ${c.title}\n${c.date} | ${c.subtitle}\n\nFONTE\n${c.source}${c.sourceUrl ? "\n" + c.sourceUrl : ""}\n\nPROMPT ORIGINAL\n${c.prompt}\n\nOUTPUT\n${c.output}\n\nLEITURA DO PEDIDO\n${c.intent}\n\nO QUE SE OBSERVA\n${c.observed}\n\nA VALIDAR\n${c.caution}`).join('\n\n' + '—'.repeat(55) + '\n\n');
     const url = URL.createObjectURL(new Blob(['\uFEFF', body], {type:'text/plain;charset=utf-8'}));
     const a = document.createElement('a'); a.href = url; a.download = 'IAAA_prompts_e_fontes.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
   });
