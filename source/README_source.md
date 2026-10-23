@@ -3,11 +3,13 @@
 ## Documento fornecido na conversa
 
 - Ficheiro: `013_aroeira_Imagens-03_09_22.pdf`.
-- Título nas pranchas: **Casa da Família Pereira**.
-- Identificação nas pranchas: **Herdade da Aroeira / Lote 56 - P7**.
+- Título apresentado: **Moradia na Aroeira** (designação generalizada para este portefólio).
+- Referência de localização: **Aroeira, Portugal** (identificação do lote omitida).
 - Autoria indicada: **CSF Arquitectos Associados**.
 - Data indicada: **Setembro de 2003**.
 - 29 páginas com perspetivas exteriores e interiores.
+
+O título familiar e a referência ao lote foram generalizados nesta cópia pública; os restantes dados documentais mantêm a proveniência.
 
 As páginas 2–7 mostram a frente de acesso e as relações com o terreno; as páginas 8–20 mostram o jardim, os volumes, as coberturas, o alpendre e a piscina; as páginas 21–29 mostram espaços interiores e escadas.
 
